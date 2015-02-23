@@ -1,100 +1,79 @@
 ﻿using UnityEngine;
 using System.Collections;
-
+using System.Collections.Generic;
+using System.Linq;
 
 [RequireComponent (typeof(BoxCollider2D))]
 public class PlayerPhysics : MonoBehaviour {
 	
-	public LayerMask collisionMask;
+	public LayerMask CollisionMask;
 	
-	private BoxCollider2D collider;
-	private Vector3 size;
-	private Vector3 center;
-	
-	private float skin = .005f;
-	
-	[HideInInspector]
-	public bool grounded;
+	private BoxCollider2D _myCollider;
 
-	[HideInInspector]
-	public bool movementStopped;
-	
-	Ray ray;
-	RaycastHit hit;
+    private List<BoxCollider2D> _levelColliders;
+
+    public Vector2 _velocity;
+
+    public float SpeedDecay;
+    public float MaxSpeed;
 	
 	void Start() {
-		collider = GetComponent<BoxCollider2D>();
-		size = collider.size;
-		center = collider.center;
-	}
-	
-	public void Move(Vector2 moveAmount) {
-		
-		float deltaY = moveAmount.y;
-		float deltaX = moveAmount.x;
-		Vector2 position = transform.position;
-		
-		// Check collisions above and below
-		grounded = false;
-		
-		for (int i = 0; i<3; i ++) {
-			float dir = Mathf.Sign(deltaY);
-			float x = (position.x + center.x - size.x/2) + size.x/2 * i; // Left, centre and then rightmost point of collider
-			float y = position.y + center.y + size.y/2 * dir; // Bottom of collider
-			
-			ray = new Ray(new Vector2(x,y), new Vector2(0,dir));
-			Debug.DrawRay(ray.origin,ray.direction);
-			if (Physics.Raycast(ray,out hit,Mathf.Abs(deltaY),collisionMask)) {
-				// Get Distance between player and ground
-				float dst = Vector3.Distance (ray.origin, hit.point);
-				
-				// Stop player's downwards movement after coming within skin width of a collider
-				if (dst > skin) 
-				{
-					deltaY = dst * dir + skin;
-				}
-				else 
-				{
-					deltaY = 0;
-				}
-				
-				grounded = true;				
-				break;				
-			}
-		}		
+		_myCollider = GetComponent<BoxCollider2D>();
 
-		// Check collisions left and right
-		movementStopped = false;
-		for (int i = 0; i<3; i ++) 
-		{
-			float dir = Mathf.Sign(deltaX);
-			float x = position.x + center.x + size.x/2 * dir;
-			float y = position.y + center.y - size.y/2 + size.y/2 * i;
-			
-			ray = new Ray(new Vector2(x,y), new Vector2(dir,0));
-			Debug.DrawRay(ray.origin,ray.direction);
-			
-			if (Physics.Raycast(ray,out hit,Mathf.Abs(deltaX) + skin,collisionMask)) 
-			{
-				// Get Distance between player and ground
-				float distance = Vector3.Distance (ray.origin, hit.point);
-				
-				// Stop player's downwards movement after coming within skin width of a collider
-				if (distance > skin) 
-				{
-					deltaX = distance * dir - skin * dir;
-				}
-				else 
-				{
-					deltaX = 0;
-				}
-				
-				movementStopped = true;
-				break;				
-			}
-		}		
-		
-		Vector2 finalTransform = new Vector2(deltaX,deltaY);		
-		transform.Translate(finalTransform);
-	}	
+        _levelColliders = new List<BoxCollider2D>(GameObject.FindObjectsOfType<BoxCollider2D>());
+        _levelColliders.Remove(_myCollider);
+	}
+
+    public void FixedUpdate()
+    {
+        // Gravity
+        _velocity.y -= 10f * Time.fixedDeltaTime;
+
+        _velocity.x = Mathf.Clamp(_velocity.x, -MaxSpeed, MaxSpeed);
+        _velocity.y = Mathf.Clamp(_velocity.y, -MaxSpeed, MaxSpeed);
+
+        transform.position = (Vector2)transform.position + _velocity * Time.fixedDeltaTime;
+        transform.position = CollisionResponse(transform.position);
+    }
+
+    private Vector2 CollisionResponse(Vector2 position)
+    {
+        // If we collide with something, push the character outside of it.
+        var collider = Physics2D.OverlapArea(_myCollider.center + (Vector2)_myCollider.bounds.min, _myCollider.center + (Vector2)_myCollider.bounds.max, CollisionMask);
+        if (collider != null)
+        {
+            Debug.Log(collider.name);
+
+            var dirs = new Vector2[] {
+                new Vector2(collider.bounds.min.x - _myCollider.bounds.max.x, 0), // left
+                new Vector2(collider.bounds.max.x - _myCollider.bounds.min.x, 0), // right
+                new Vector2(0, collider.bounds.min.y - _myCollider.bounds.max.y), // bottom
+                new Vector2(0, collider.bounds.max.y - _myCollider.bounds.min.y) // top
+            };
+
+            var dir = dirs.OrderBy(d => d.magnitude).First();
+
+            // Kill any velocity in the direction of pushout
+            if (Mathf.Abs(dir.x) > 0.0001f) _velocity.x = 0;
+            if (Mathf.Abs(dir.y) > 0.0001f) _velocity.y = 0;
+
+            position += dir;
+        }
+
+        return position;
+    }
+	
+	public void Accelerate(Vector2 acceleration) {
+        _velocity += acceleration * Time.fixedDeltaTime;
+	}
+
+    public void Jump()
+    {
+
+    }
+
+    internal void Hold()
+    {
+        _velocity.x = Mathf.Max(Mathf.Abs(_velocity.x) - (SpeedDecay * Time.fixedDeltaTime), 0) * Mathf.Sign(_velocity.x);
+    }
 }

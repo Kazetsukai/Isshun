@@ -23,10 +23,10 @@ public class PlatformBehaviour : MonoBehaviour {
 		Vector2 colDistance = other.gameObject.transform.position - this.transform.position;
 
 		//Move the object in the direction it came from until it is no longer inside the platform bounds
-		while (other.collider.transform.position
+		//while (other.collider.transform.position
 
 
-		Debug.Log (colDistance);
+		//Debug.Log (colDistance);
 
 
 	}
