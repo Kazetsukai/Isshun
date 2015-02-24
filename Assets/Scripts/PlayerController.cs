@@ -23,5 +23,12 @@ public class PlayerController : MonoBehaviour {
             playerPhysics.Hold();
         else
             playerPhysics.Accelerate(new Vector2(accel, 0));
+
+
+        if (Input.GetButton("Fire1"))
+        {
+            Debug.Log("JUMP!!!");
+            playerPhysics.Jump();
+        }
 	}
 }

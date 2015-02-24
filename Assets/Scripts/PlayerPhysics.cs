@@ -12,10 +12,16 @@ public class PlayerPhysics : MonoBehaviour {
 
     private List<BoxCollider2D> _levelColliders;
 
-    public Vector2 _velocity;
+    private Vector2 _velocity;
+    private float _jumpTime = 0;
+    private bool _jumping = false;
 
+    public float Gravity;
     public float SpeedDecay;
-    public float MaxSpeed;
+    public float MaxSpeedHorizontal;
+    public float MaxSpeedVertical;
+    public float MaxJumpTime;
+    public float JumpSpeed;
 	
 	void Start() {
 		_myCollider = GetComponent<BoxCollider2D>();
@@ -27,49 +33,89 @@ public class PlayerPhysics : MonoBehaviour {
     public void FixedUpdate()
     {
         // Gravity
-        _velocity.y -= 10f * Time.fixedDeltaTime;
+        _velocity.y -= Gravity * Time.fixedDeltaTime;
 
-        _velocity.x = Mathf.Clamp(_velocity.x, -MaxSpeed, MaxSpeed);
-        _velocity.y = Mathf.Clamp(_velocity.y, -MaxSpeed, MaxSpeed);
-
-        transform.position = (Vector2)transform.position + _velocity * Time.fixedDeltaTime;
-        transform.position = CollisionResponse(transform.position);
-    }
-
-    private Vector2 CollisionResponse(Vector2 position)
-    {
-        // If we collide with something, push the character outside of it.
-        var collider = Physics2D.OverlapArea(_myCollider.center + (Vector2)_myCollider.bounds.min, _myCollider.center + (Vector2)_myCollider.bounds.max, CollisionMask);
-        if (collider != null)
+        if (_jumping && _jumpTime > 0)
         {
-            Debug.Log(collider.name);
-
-            var dirs = new Vector2[] {
-                new Vector2(collider.bounds.min.x - _myCollider.bounds.max.x, 0), // left
-                new Vector2(collider.bounds.max.x - _myCollider.bounds.min.x, 0), // right
-                new Vector2(0, collider.bounds.min.y - _myCollider.bounds.max.y), // bottom
-                new Vector2(0, collider.bounds.max.y - _myCollider.bounds.min.y) // top
-            };
-
-            var dir = dirs.OrderBy(d => d.magnitude).First();
-
-            // Kill any velocity in the direction of pushout
-            if (Mathf.Abs(dir.x) > 0.0001f) _velocity.x = 0;
-            if (Mathf.Abs(dir.y) > 0.0001f) _velocity.y = 0;
-
-            position += dir;
+            _velocity.y = JumpSpeed;
+            _jumpTime -= Time.fixedDeltaTime;
+        }
+        else
+        {
+            _jumpTime = 0;
         }
 
-        return position;
+        _velocity.x = Mathf.Clamp(_velocity.x, -MaxSpeedHorizontal, MaxSpeedHorizontal);
+        _velocity.y = Mathf.Clamp(_velocity.y, -MaxSpeedVertical, MaxSpeedVertical);
+
+        transform.position = (Vector2)transform.position + _velocity * Time.fixedDeltaTime;
+        CollisionResponse(transform.position);
+
+        _jumping = false;
+    }
+
+    private void CollisionResponse(Vector2 position)
+    {
+        int iterationsLeft = 4;
+
+        while (iterationsLeft > 0)
+        {
+            iterationsLeft--;
+
+            // If we collide with something, push the character outside of it.
+            var colliders = Physics2D.OverlapAreaAll(_myCollider.center + (Vector2)_myCollider.bounds.min, _myCollider.center + (Vector2)_myCollider.bounds.max, CollisionMask);
+
+            foreach (var collider in colliders)
+            {
+                Debug.Log(collider.name);
+
+                var dirs = new Vector2[] {
+                    new Vector2(Mathf.Min(collider.bounds.min.x - _myCollider.bounds.max.x, 0), 0), // left
+                    new Vector2(Mathf.Max(collider.bounds.max.x - _myCollider.bounds.min.x, 0), 0), // right
+                    new Vector2(0, Mathf.Min(collider.bounds.min.y - _myCollider.bounds.max.y, 0)), // bottom
+                    new Vector2(0, Mathf.Max(collider.bounds.max.y - _myCollider.bounds.min.y, 0)) // top
+                };
+
+                var dir = dirs.OrderBy(d => d.magnitude).First();
+
+                // Kill any velocity in the direction of pushout
+                if (Mathf.Abs(dir.x) > 0.0001f) 
+                {
+                    _velocity.x = 0;
+
+                    transform.position += (Vector3)dir;
+                    iterationsLeft = 0;
+                }
+                if (Mathf.Abs(dir.y) > 0.0001f)
+                {
+                    // Reset jump if we hit a floor and are not trying to jump
+                    if (!_jumping && dir.y > 0)
+                        _jumpTime = MaxJumpTime;
+                    else
+                        _jumpTime = 0; // Stop a jump if we hit a roof
+
+                    _velocity.y = 0;
+
+                    transform.position += (Vector3)dir;
+                    iterationsLeft = 0;
+                }
+            }
+           
+            if (colliders.Length == 0)
+            {
+                iterationsLeft = 0;
+            }
+        }
     }
 	
 	public void Accelerate(Vector2 acceleration) {
         _velocity += acceleration * Time.fixedDeltaTime;
 	}
 
+
     public void Jump()
     {
-
+        _jumping = true;
     }
 
     internal void Hold()
