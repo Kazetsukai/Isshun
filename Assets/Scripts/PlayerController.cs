@@ -25,6 +25,11 @@ public class PlayerController : MonoBehaviour {
             playerPhysics.Accelerate(new Vector2(accel, 0));
 
 
+        Debug.Log("Horizontal = " + Input.GetAxisRaw("HorizontalAim") + "    Vertical = " + Input.GetAxisRaw("VerticalAim"));
+        var sphere = GameObject.Find("Sphere");
+
+        sphere.transform.localPosition = new Vector3(Mathf.RoundToInt(Input.GetAxisRaw("HorizontalAim")), -Mathf.RoundToInt(Input.GetAxisRaw("VerticalAim"))).normalized * 0.5f;
+
         if (Input.GetButton("Fire1"))
         {
             Debug.Log("JUMP!!!");
