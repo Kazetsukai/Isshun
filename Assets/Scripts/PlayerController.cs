@@ -35,5 +35,12 @@ public class PlayerController : MonoBehaviour {
             Debug.Log("JUMP!!!");
             playerPhysics.Jump();
         }
+
+        if (Input.GetButton("Fire2"))
+        {
+
+            Debug.DrawLine(sphere.transform.position, sphere.transform.localPosition.normalized, Color.red);
+            //playerPhysics.Jump();
+        }
 	}
 }
