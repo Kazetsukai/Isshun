@@ -9,6 +9,8 @@ public class PlayerController : MonoBehaviour {
 
 	PlayerPhysics playerPhysics;
 
+    public GameObject LaserObject;
+
 	void Start () 
 	{
 		playerPhysics = GetComponent<PlayerPhysics>();
@@ -38,9 +40,16 @@ public class PlayerController : MonoBehaviour {
 
         if (Input.GetButton("Fire2"))
         {
-
-            Debug.DrawLine(sphere.transform.position, sphere.transform.localPosition.normalized, Color.red);
-            //playerPhysics.Jump();
+            FireLaser(sphere.transform.position, sphere.transform.position + sphere.transform.localPosition.normalized * 100);
         }
 	}
+
+    void FireLaser(Vector3 start, Vector3 end)
+    {
+        if (GameObject.Find("Laser(Clone)") == null)
+        {
+            var newLaser = (GameObject)Instantiate(LaserObject, start, Quaternion.FromToRotation(Vector3.up, end - start));
+            newLaser.transform.parent = transform;
+        }
+    }
 }
