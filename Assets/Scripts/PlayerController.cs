@@ -48,8 +48,9 @@ public class PlayerController : MonoBehaviour {
     {
         if (GameObject.Find("Laser(Clone)") == null)
         {
-            var newLaser = (GameObject)Instantiate(LaserObject, start, Quaternion.FromToRotation(Vector3.up, end - start));
+            var newLaser = (GameObject)Instantiate(LaserObject, start, Quaternion.FromToRotation(Vector3.right, end - start));
             newLaser.transform.parent = transform;
+            newLaser.transform.FindChild("laser_extent").transform.localScale = new Vector3(100, 0.5f, 0.5f);
         }
     }
 }
