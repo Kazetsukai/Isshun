@@ -31,6 +31,8 @@ public class PlayerController : MonoBehaviour {
         var sphere = GameObject.Find("Sphere");
 
         sphere.transform.localPosition = new Vector3(Mathf.RoundToInt(Input.GetAxisRaw("HorizontalAim")), -Mathf.RoundToInt(Input.GetAxisRaw("VerticalAim"))).normalized * 0.5f;
+		if (Mathf.Abs (Input.GetAxisRaw ("HorizontalAim")) < 0.01f)
+			sphere.transform.localPosition = Vector3.right;
 
         if (Input.GetButton("Fire1"))
         {

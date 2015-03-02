@@ -14,7 +14,12 @@ public class LaserScript : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	    
+		RaycastHit2D rayCastHit = Physics2D.Raycast (transform.position, transform.right);
+
+		if (rayCastHit.collider != null) {
+			Debug.Log (rayCastHit.distance);
+			transform.FindChild("laser_extent").transform.localScale = new Vector3( rayCastHit.distance * 16, 0.5f, 0.5f);
+		}
 	}
 
     void FixedUpdate()
