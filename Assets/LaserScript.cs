@@ -18,6 +18,7 @@ public class LaserScript : MonoBehaviour {
 
 		if (rayCastHit.collider != null) {
 			Debug.Log (rayCastHit.distance);
+			//Debug.DrawRay (transform.position, rayCastHit.point - transform.position);
 			transform.FindChild("laser_extent").transform.localScale = new Vector3( rayCastHit.distance * 16, 0.5f, 0.5f);
 		}
 	}

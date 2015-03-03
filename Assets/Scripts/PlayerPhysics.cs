@@ -49,7 +49,10 @@ public class PlayerPhysics : MonoBehaviour {
         _velocity.y = Mathf.Clamp(_velocity.y, -MaxSpeedVertical, MaxSpeedVertical);
 
         transform.position = (Vector2)transform.position + _velocity * Time.fixedDeltaTime;
-        CollisionResponse(transform.position);
+
+		CollisionResponse(transform.position);
+
+		GetComponent<Animator> ().SetBool ("moving", _velocity.magnitude > 0.01f);
 
         _jumping = false;
     }
