@@ -66,7 +66,7 @@ public class PlayerPhysics : MonoBehaviour {
             iterationsLeft--;
 
             // If we collide with something, push the character outside of it.
-            var colliders = Physics2D.OverlapAreaAll(_myCollider.center + (Vector2)_myCollider.bounds.min, _myCollider.center + (Vector2)_myCollider.bounds.max, CollisionMask);
+            var colliders = Physics2D.OverlapAreaAll(_myCollider.offset + (Vector2)_myCollider.bounds.min, _myCollider.offset + (Vector2)_myCollider.bounds.max, CollisionMask);
 
             foreach (var collider in colliders)
             {
